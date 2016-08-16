@@ -142,9 +142,9 @@ void TestJPGMemPoolCompressor(const unsigned char* uimg,
 
 int TestCompressorAndDecompressor(int argc, char** argv) {
     //read
-    if(argc < 3 ){
+    if(argc < 4 ){
         cerr << "usage: " << argv[0]
-             << " <jpeg file> <quality=[0,100]>" << endl;
+             << " <jpeg file> <quality=[0,100]> <num threads>" << endl;
     }
     const size_t length = FileSize(argv[1]);
     using Byte = unsigned char;
@@ -196,9 +196,12 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
 //    TestJPGMemPoolCompressor(img.DataPtr(), img.Width(), img.Height(),
 //                             FromCS(img.PixelFormat()), TJSAMP_420, 50, 10);
 
+    const int numThreads = strtol(argv[3], nullptr, 10);
+    assert(numThreads > 0);
     std::vector< JPEGImage > stacks =
         TestJPGParallelCompressor(img.DataPtr(), img.Width(), img.Height(),
-                                  FromCS(img.PixelFormat()), TJSAMP_420, 50, 4);
+                                  FromCS(img.PixelFormat()), TJSAMP_420, 50,
+                                  numThreads);
     TestJPGParallelDeCompressor(stacks);
     return EXIT_SUCCESS;
 }
