@@ -1,10 +1,23 @@
 #pragma once
+//Author: Ugo Varetto
 //
-// Created by Ugo Varetto on 8/16/16.
+// This file is part of tjpp.
+//tjpp is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
 //
+//tjpp is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <unordered_map>
 
+namespace tjpp {
 enum ColorSpace {
     RGB = 0,
     RGBA,
@@ -27,8 +40,8 @@ struct HashCS {
 
 int NComp(ColorSpace pixelFormat) {
     static std::unordered_map< ColorSpace, int, HashCS > pfToInt = {
-        {RGB,  3},
-        {BGR,  3},
+        {RGB, 3},
+        {BGR, 3},
         {GRAY, 1},
         {RGBA, 4},
         {BGRA, 4},
@@ -45,7 +58,6 @@ int NComp(ColorSpace pixelFormat) {
     }
     return pfToInt[pixelFormat];
 }
-
 
 class Image {
 public:
@@ -97,4 +109,4 @@ private:
     ColorSpace colorSpace_;
     std::vector< unsigned char > data_;
 };
-
+}

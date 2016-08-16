@@ -1,4 +1,3 @@
-#pragma once
 //Author: Ugo Varetto
 //
 // This file is part of tjpp.
@@ -14,13 +13,4 @@
 //
 //You should have received a copy of the GNU General Public License
 //along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
-#include <chrono>
-using Timer = std::chrono::steady_clock;
-using Time = Timer::time_point;
-using Duration = Timer::duration;
-namespace {
-Time Tick() { return Timer::now(); }
-inline std::chrono::milliseconds toms(Duration d) {
-    return std::chrono::duration_cast< std::chrono::milliseconds >(d);
-}
-}
+

@@ -1,7 +1,20 @@
 #pragma once
+///Author: Ugo Varetto
 //
-// Created by Ugo Varetto on 8/16/16.
+// This file is part of tjpp.
+//tjpp is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
 //
+//tjpp is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+
 //Note: consider using X* or *X pixel format to speed up memory access
 #include <memory>
 #include <unordered_map>
@@ -9,7 +22,7 @@
 
 #include <turbojpeg.h>
 
-
+namespace tjpp {
 struct HashTJPF {
     size_t operator()(TJPF n) const {
         return std::hash< int >()(int(n));
@@ -17,8 +30,8 @@ struct HashTJPF {
 };
 int NumComponents(TJPF tjpgPixelFormat) {
     static std::unordered_map< TJPF, int, HashTJPF > tjpfToInt = {
-        {TJPF_RGB,  3},
-        {TJPF_BGR,  3},
+        {TJPF_RGB, 3},
+        {TJPF_BGR, 3},
         {TJPF_RGBX, 4},
         {TJPF_BGRX, 4},
         {TJPF_XRGB, 4},
@@ -37,7 +50,8 @@ int NumComponents(TJPF tjpgPixelFormat) {
 }
 
 void TJDeleter(unsigned char* ptr) {
-    if(!ptr) return;
+    if(!ptr)
+        return;
     tjFree(ptr);
 }
 
@@ -59,7 +73,7 @@ public:
     }
     JPEGImage(int w, int h, TJPF pf, TJSAMP s, int q) :
         width_(w), height_(h), pixelFormat_(pf), subSampling_(s), quality_(q),
-        data_(tjAlloc(w * h * NumComponents(pf)), TJDeleter){} //
+        data_(tjAlloc(w * h * NumComponents(pf)), TJDeleter) {} //
     JPEGImage& operator=(JPEGImage&& i) {
         width_ = i.width_;
         height_ = i.height_;
@@ -111,10 +125,11 @@ private:
     std::shared_ptr< unsigned char > data_;
 };
 
-size_t UncompressedSize(size_t width, size_t height, TJPF pf)  {
+size_t UncompressedSize(size_t width, size_t height, TJPF pf) {
     return width * height * NumComponents(pf);
 }
 
-size_t UncompressedSize(const JPEGImage& i)  {
+size_t UncompressedSize(const JPEGImage& i) {
     return size_t(i.Width() * i.Height() * NumComponents(i.PixelFormat()));
+}
 }

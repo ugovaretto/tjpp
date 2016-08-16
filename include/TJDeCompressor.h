@@ -1,7 +1,19 @@
 #pragma once
+//Author: Ugo Varetto
 //
-// Created by Ugo Varetto on 8/16/16.
+// This file is part of tjpp.
+//tjpp is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
 //
+//tjpp is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdexcept>
 #include <turbojpeg.h>
@@ -10,6 +22,7 @@
 #include "colorspace.h"
 #include "timing.h"
 
+namespace tjpp {
 class TJDeCompressor {
 public:
     TJDeCompressor(size_t preAllocatedSize = 0) :
@@ -25,8 +38,13 @@ public:
         int height = -1;
         int jpegSubsamp = -1;
         int colorSpace = -1;
-        if(tjDecompressHeader3(tjDeCompressor_, jpgImg,
-                            size, &width, &height, &jpegSubsamp, &colorSpace))
+        if(tjDecompressHeader3(tjDeCompressor_,
+                               jpgImg,
+                               size,
+                               &width,
+                               &height,
+                               &jpegSubsamp,
+                               &colorSpace))
             throw std::runtime_error(tjGetErrorStr());
         const size_t uncompressedSize =
             width * height * NumComponents(TJPF(colorSpace));
@@ -40,7 +58,7 @@ public:
         Time begin = Tick();
 #endif
         if(tjDecompress2(tjDeCompressor_, jpgImg, size, img_.DataPtr(),
-                      width, 0, height, colorSpace, flags))
+                         width, 0, height, colorSpace, flags))
             throw std::runtime_error(tjGetErrorStr());
 #ifdef TIMING__
         Time end = Tick();
@@ -62,3 +80,4 @@ private:
     Image img_;
     tjhandle tjDeCompressor_;
 };
+}

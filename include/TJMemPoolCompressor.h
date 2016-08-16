@@ -1,7 +1,19 @@
 #pragma once
+//Author: Ugo Varetto
 //
-// Created by Ugo Varetto on 8/16/16.
+// This file is part of tjpp.
+//tjpp is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
 //
+//tjpp is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 //ADD:
 // flag support
@@ -14,13 +26,14 @@
 #include "JPEGImage.h"
 #include "timing.h"
 
+namespace tjpp {
 class TJMemPoolCompressor {
 public:
     class JPEGImageWrapper {
     public:
         JPEGImageWrapper(JPEGImage img,
                          std::shared_ptr< SyncQueue< JPEGImage > > sq)
-        : img_(img), queue_(sq) {}
+            : img_(img), queue_(sq) {}
         const JPEGImage& Image() const { return img_; }
         operator const JPEGImage&() { return Image(); }
         void Flush() {
@@ -69,8 +82,8 @@ public:
         Time begin = Tick();
 #endif
         if(tjCompress2(tjCompressor_, img, width, 0, height, pf,
-                    &ptr, &jpegSize, ss, quality,
-                    flags))
+                       &ptr, &jpegSize, ss, quality,
+                       flags))
             throw std::runtime_error(tjGetErrorStr());
 #ifdef TIMING__
         Time end = Tick();
@@ -79,7 +92,7 @@ public:
                   << std::endl;
 #endif
         i.SetJPEGSize(jpegSize);
-        return JPEGImageWrapper(i, memoryPool_ );
+        return JPEGImageWrapper(i, memoryPool_);
     }
     void PutBack(JPEGImage&& im) {
         memoryPool_->Push(std::move(im));
@@ -94,3 +107,4 @@ private:
     std::shared_ptr< SyncQueue< JPEGImage > > memoryPool_;
     tjhandle tjCompressor_;
 };
+}

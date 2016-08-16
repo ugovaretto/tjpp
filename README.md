@@ -1,2 +1,3 @@
 # tjpp
-Lightweight C++ frontend to libjpeg-turbo
+Lightweight C++ frontend to libjpeg-turbo.
+Distributed under GPL v.3.0 license.
