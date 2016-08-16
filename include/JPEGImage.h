@@ -58,32 +58,16 @@ void TJDeleter(unsigned char* ptr) {
 class JPEGImage {
 public:
     JPEGImage() : width_(0), height_(0), pixelFormat_(TJPF()),
-                  subSampling_(TJSAMP()), quality_(50) {}
+                  subSampling_(TJSAMP()), quality_(50), pitch_(0) {}
     JPEGImage(const JPEGImage&) = default;
     JPEGImage(JPEGImage&& i) {
-        width_ = i.width_;
-        height_ = i.height_;
-        pixelFormat_ = i.pixelFormat_;
-        subSampling_ = i.subSampling_;
-        quality_ = i.quality_;
-        data_ = std::move(i.data_);
-        i.data_.reset();
-        i.width_ = 0;
-        i.height_ = 0;
+        Move(i);
     }
     JPEGImage(int w, int h, TJPF pf, TJSAMP s, int q) :
         width_(w), height_(h), pixelFormat_(pf), subSampling_(s), quality_(q),
         data_(tjAlloc(w * h * NumComponents(pf)), TJDeleter) {} //
     JPEGImage& operator=(JPEGImage&& i) {
-        width_ = i.width_;
-        height_ = i.height_;
-        pixelFormat_ = i.pixelFormat_;
-        subSampling_ = i.subSampling_;
-        quality_ = i.quality_;
-        data_ = std::move(i.data_);
-        i.width_ = 0;
-        i.height_ = 0;
-        i.data_.reset();
+        Move(i);
         return *this;
     }
     int Width() const { return width_; }
@@ -116,11 +100,25 @@ public:
     size_t JPEGSize() const { return jpegSize_; }
     bool operator!() const { return Empty(); }
 private:
+    void Move(JPEGImage& i) {
+        width_ = i.width_;
+        height_ = i.height_;
+        pixelFormat_ = i.pixelFormat_;
+        subSampling_ = i.subSampling_;
+        quality_ = i.quality_;
+        pitch_ = i.pitch_;
+        data_ = std::move(i.data_);
+        i.data_.reset();
+        i.width_ = 0;
+        i.height_ = 0;
+    }
+private:
     int width_;
     int height_;
     TJPF pixelFormat_;
     TJSAMP subSampling_;
     int quality_;
+    int pitch_;
     size_t jpegSize_;
     std::shared_ptr< unsigned char > data_;
 };

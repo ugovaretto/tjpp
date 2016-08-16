@@ -33,7 +33,9 @@ public:
     }
     //read data from header case
     Image DeCompress(const unsigned char* jpgImg,
-                     size_t size, int flags = TJFLAG_FASTDCT) {
+                     size_t size,
+                     int flags = TJFLAG_FASTDCT,
+                     int pitch = 0) {
         int width = -1;
         int height = -1;
         int jpegSubsamp = -1;
@@ -58,7 +60,7 @@ public:
         Time begin = Tick();
 #endif
         if(tjDecompress2(tjDeCompressor_, jpgImg, size, img_.DataPtr(),
-                         width, 0, height, colorSpace, flags))
+                         width, pitch, height, colorSpace, flags))
             throw std::runtime_error(tjGetErrorStr());
 #ifdef TIMING__
         Time end = Tick();

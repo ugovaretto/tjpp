@@ -35,7 +35,9 @@ public:
                               TJPF pf,
                               TJSAMP ss,
                               int quality,
-                              int flags = TJFLAG_FASTDCT) {
+                              int offset = 0,
+                              int flags = TJFLAG_FASTDCT,
+                              int pitch = 0) {
         if(img_.Empty()
             || UncompressedSize(width, height, pf) > UncompressedSize(img_)) {
             img_.Reset(width, height, pf, ss, quality);
@@ -46,7 +48,7 @@ public:
 #ifdef TIMING__
         Time begin = Tick();
 #endif
-        if(tjCompress2(tjCompressor_, img, width, 0, height, pf,
+        if(tjCompress2(tjCompressor_, img + offset, width, 0, height, pf,
                        &ptr, &jpegSize, ss, quality,
                        flags))
             throw std::runtime_error(tjGetErrorStr());
