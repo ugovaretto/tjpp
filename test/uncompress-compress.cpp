@@ -12,7 +12,7 @@
 //GNU General Public License for more details.
 //
 //You should have received a copy of the GNU General Public License
-//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+//along with tjpp.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <cstring>
@@ -25,6 +25,7 @@
 #include "TJMemPoolCompressor.h"
 #include "TJDeCompressor.h"
 #include "TJParallelCompressor.h"
+#include "TJParallelDeCompressor.h"
 
 #ifdef TIMING__
 #include "timing.h"
@@ -45,20 +46,21 @@ size_t FileSize(const string& fname) {
 }
 
 
-void TestJPGMultiCompressor(const unsigned char* uimg,
-                            int width,
-                            int height,
-                            TJPF pf,
-                            TJSAMP ss,
-                            int quality,
-                            int numStacks) {
+std::vector< JPEGImage >
+TestJPGParallelCompressor(const unsigned char* uimg,
+                          int width,
+                          int height,
+                          TJPF pf,
+                          TJSAMP ss,
+                          int quality,
+                          int numStacks) {
 
 
     TJParallelCompressor< TJCompressor > mc(numStacks);
 #ifdef TIMING__
     Time begin = Tick();
 #endif
-    std::vector< JPEGImage > images = mc.Compress(uimg, numStacks, 0, width,
+    std::vector< JPEGImage > images = mc.Compress(uimg, numStacks, width,
                                                   height, pf, ss, quality);
 #ifdef TIMING__
     Time end = Tick();
@@ -72,35 +74,43 @@ void TestJPGMultiCompressor(const unsigned char* uimg,
         os.write((char*)images[i].DataPtr(), images[i].JPEGSize());
         //assert(images[i].Empty()); //moved!
     }
-
+    return images;
 }
 
-//void TestJPGParallelDeCompressor(vector< shared_ptr< unsigned char > > in,
-//                                 int overlap) {
-//
-//
-//    TJParallelDeCompressor< TJDeCompressor > mc(in.size());
-//#ifdef TIMING__
-//    Time begin = Tick();
-//#endif
-//    Image img = mc.DeCompress(in, overlap);
-//#ifdef TIMING__
-//    Time end = Tick();
-//    cout << "multi - decompression time: " << toms(end - begin).count() << endl;
-//#endif
-//    TJCompressor c;
-//    JPEGImage jimg = c.Compress(img.DataPtr(),
-//                                img.Width(),
-//                                img.Height(),
-//                                in.front().PixelFormat(),
-//                                TJSAMP_420,
-//                                50);
-//    const string fname = "mout.jpg";
-//    ofstream os(fname, ios::binary);
-//    assert(os);
-//    os.write((char*)jimg.DataPtr(), img.JPEGSize());
-//
-//}
+//note: very important to pre-allocate memory, especially for 4k images
+void TestJPGParallelDeCompressor(const vector< JPEGImage >& imgs) {
+    const size_t globalHeight
+        = std::accumulate(begin(imgs),
+                          end(imgs),
+                          size_t(0),
+                          [](size_t prev, const JPEGImage& i) {
+                             return prev + i.Height();
+                          });
+    const size_t globalWidth = size_t(imgs.front().Width());
+    const int numComp = imgs.front().NumPlanes();
+    TJParallelDeCompressor
+        mc(imgs.size(), numComp * globalHeight * globalWidth);
+#ifdef TIMING__
+    Time begin = Tick();
+#endif
+    Image img = mc.DeCompress(imgs);
+#ifdef TIMING__
+    Time end = Tick();
+    cout << "multi - decompression time: " << toms(end - begin).count() << endl;
+#endif
+    TJCompressor c;
+    JPEGImage jimg = c.Compress(img.DataPtr(),
+                                int(img.Width()),
+                                int(img.Height()),
+                                imgs.front().PixelFormat(),
+                                TJSAMP_420,
+                                50);
+    const string fname = "mout.jpg";
+    ofstream os(fname, ios::binary);
+    assert(os);
+    os.write((char*)jimg.DataPtr(), jimg.JPEGSize());
+
+}
 
 void TestJPGMemPoolCompressor(const unsigned char* uimg,
                               int width,
@@ -149,7 +159,7 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
 #endif
     //move semantics for both constructor and assignment operator
     Image img;
-    img = (decomp.DeCompress(input.data(), input.size()));
+    img = decomp.DeCompress(input.data(), input.size());
 #ifdef TIMING__
     Time end = Tick();
 #endif
@@ -186,9 +196,10 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
 //    TestJPGMemPoolCompressor(img.DataPtr(), img.Width(), img.Height(),
 //                             FromCS(img.PixelFormat()), TJSAMP_420, 50, 10);
 
-    TestJPGMultiCompressor(img.DataPtr(), img.Width(), img.Height(),
-                           FromCS(img.PixelFormat()), TJSAMP_420, 50, 4);
-
+    std::vector< JPEGImage > stacks =
+        TestJPGParallelCompressor(img.DataPtr(), img.Width(), img.Height(),
+                                  FromCS(img.PixelFormat()), TJSAMP_420, 50, 4);
+    TestJPGParallelDeCompressor(stacks);
     return EXIT_SUCCESS;
 }
 

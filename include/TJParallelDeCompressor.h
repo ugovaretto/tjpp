@@ -13,22 +13,23 @@
 //GNU General Public License for more details.
 //
 //You should have received a copy of the GNU General Public License
-//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+//along with tjpp. If not, see <http://www.gnu.org/licenses/>.
 
 #include <stdexcept>
 #include <turbojpeg.h>
 
 #include "Image.h"
+#include "JPEGImage.h"
 #include "colorspace.h"
 #include "timing.h"
-#include <algorithm>
+#include <numeric>
 
 namespace tjpp {
 
 class TJParallelDeCompressor {
 public:
     TJParallelDeCompressor(int numStacks, size_t preAllocatedSize = 0) :
-        handles_(numStacks) {
+        handles_(numStacks), tasks_(numStacks) {
         if(preAllocatedSize > 0) {
             img_.Allocate(preAllocatedSize);
         }
@@ -38,22 +39,22 @@ public:
     }
     //read data from header case
     Image DeCompress(const std::vector< JPEGImage >& jpgImgs,
-                     int overlap, int flags) {
+                     int flags = TJFLAG_FASTDCT) {
         const size_t globalWidth = jpgImgs.front().Width();
         const size_t globalHeight
             = std::accumulate(begin(jpgImgs),
                               end(jpgImgs),
                               size_t(0),
-                             [](size_t prev, const JPEGImage& i2) {
+                              [](size_t prev, const JPEGImage& i2) {
                                  return prev + i2.Height();
-                             });
+                              });
         int h = 0;
         int colorSpace = -1;
         for(int i = 0; i != jpgImgs.size(); ++i) {
             int width = -1;
             int height = -1;
             int jpegSubsamp = -1;
-            if(tjDecompressHeader3(tjDeCompressor_,
+            if(tjDecompressHeader3(handles_[i],
                                    jpgImgs[i].DataPtr(),
                                    jpgImgs[i].JPEGSize(),
                                    &width,
@@ -70,39 +71,37 @@ public:
             globalWidth * globalHeight * NumComponents(TJPF(colorSpace));
 
         if(img_.AllocatedSize() < uncompressedSize) {
-            img_.SetParameters(gloablWidth, globalHeight, FromTJ(TJPF(colorSpace)));
+            img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(colorSpace)));
             img_.Allocate(uncompressedSize);
         }
-        img_.SetParameters(width, height, FromTJ(TJPF(colorSpace)));
+        img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(colorSpace)));
 
-        auto decompress = [](tjhandle h,
+        auto decompress = [](tjhandle handle,
                              const unsigned char* jpgImg,
                              size_t size,
                              unsigned char* out,
-                             int w, int h, TJPF cs, TJSAMP ss, int flags) {
-            if(tjDecompress2(h, jpgImg, size, out,
-                             width, pitch, height, colorSpace, flags))
+                             int w, int h, TJPF cs, int flags) {
+            if(tjDecompress2(handle, jpgImg, size, out,
+                             w, 0, h, cs, flags))
                 throw std::runtime_error(tjGetErrorStr());
         };
 
         for(int i = 0; i != jpgImgs.size(); ++i) {
-            const int ov = i == jpgImgs.size() - 1 ? 0 : overlap;
-            const int offset = i !=
-                NumComponents(colorSpace) * i
-                    * globalWidth * (jpgImgs[i].Height() - ov);
-            tasks_.push_back(std::async(std::launch::async,
+            const int offset =
+                NumComponents(TJPF(colorSpace)) * i
+                    * globalWidth * jpgImgs[i].Height();
+            tasks_[i] = std::move(std::async(std::launch::async,
                                         decompress,
                                         handles_[i],
                                         jpgImgs[i].DataPtr(),
                                         jpgImgs[i].JPEGSize(),
                                         img_.DataPtr() + offset,
-                                        globalWidth,
-                                        jpgImgs[i].Height(),
-                                        colorSpace,
+                                        int(globalWidth),
+                                        int(jpgImgs[i].Height()),
+                                        TJPF(colorSpace),
                                         flags));
 
         }
-
         for(auto& f: tasks_) f.get();
         return std::move(img_);
     }

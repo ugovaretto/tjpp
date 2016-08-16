@@ -33,7 +33,6 @@ public:
     TJParallelCompressor(int numCompressors) : compressors_(numCompressors) {}
     std::vector< JPEGImage > Compress(const unsigned char* img,
                                       int stacks,
-                                      int overlap,
                                       int width,
                                       int height,
                                       TJPF pf,
@@ -51,17 +50,14 @@ public:
         std::vector< std::future< JPEGImage > > tasks_;
         const int h = height / stacks;
         const int nc = NumComponents(pf);
-        tasks_.push_back(
-            std::async(std::launch::async, compress,
-                       &compressors_[0], h + overlap, 0));
-        for(int s = 1; s != stacks - 1; ++s) {
+        for(int s = 0; s != stacks - 1; ++s) {
             tasks_.push_back( std::async(std::launch::async, compress,
-                           &compressors_[s], h + overlap, s * h * width * nc));
+                           &compressors_[s], h, s * h * width * nc));
 
         }
         const size_t last = compressors_.size() - 1;
-        const int lastOffset = nc * width*(height - h - overlap);
-        const int lastHeight = h + overlap;
+        const int lastOffset = nc * width * (stacks - 1) * h;
+        const int lastHeight = height - (stacks - 1) * h;
         tasks_.push_back(
             std::async(std::launch::async, compress,
                        &compressors_[last],

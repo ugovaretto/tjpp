@@ -13,7 +13,7 @@
 //GNU General Public License for more details.
 //
 //You should have received a copy of the GNU General Public License
-//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+//along with tjpp.  If not, see <http://www.gnu.org/licenses/>.
 
 //Note: consider using X* or *X pixel format to speed up memory access
 #include <memory>
@@ -72,12 +72,16 @@ public:
         Move(i);
         return *this;
     }
+    int NumPlanes() const { return NumComponents(pixelFormat_); }
     int Width() const { return width_; }
     int Height() const { return height_; }
     TJPF PixelFormat() const { return pixelFormat_; }
     TJSAMP ChrominanceSubSampling() const { return subSampling_; }
     std::shared_ptr< unsigned char > Data() const { return data_; }
     unsigned char* DataPtr() {
+        return data_.get();
+    }
+    const unsigned char* DataPtr() const {
         return data_.get();
     }
     bool Empty() const {

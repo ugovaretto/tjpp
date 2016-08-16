@@ -13,7 +13,8 @@
 //GNU General Public License for more details.
 //
 //You should have received a copy of the GNU General Public License
-//along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+//along with tjpp.  If not, see <http://www.gnu.org/licenses/>.
+
 #include <chrono>
 using Timer = std::chrono::steady_clock;
 using Time = Timer::time_point;
