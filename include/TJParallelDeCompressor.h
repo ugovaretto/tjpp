@@ -40,6 +40,7 @@ public:
     //read data from header case
     Image DeCompress(const std::vector< JPEGImage >& jpgImgs,
                      int flags = TJFLAG_FASTDCT) {
+        assert(jpgImgs.size() == handles_.size());
         const size_t globalWidth = jpgImgs.front().Width();
         const size_t globalHeight
             = std::accumulate(begin(jpgImgs),

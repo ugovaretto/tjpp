@@ -200,7 +200,8 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
     assert(numThreads > 0);
     std::vector< JPEGImage > stacks =
         TestJPGParallelCompressor(img.DataPtr(), img.Width(), img.Height(),
-                                  FromCS(img.PixelFormat()), TJSAMP_420, 50,
+                                  FromCS(img.PixelFormat()), TJSAMP_420,
+                                  quality,
                                   numThreads);
     TestJPGParallelDeCompressor(stacks);
     return EXIT_SUCCESS;
