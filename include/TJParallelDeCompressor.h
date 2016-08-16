@@ -48,25 +48,7 @@ public:
                               [](size_t prev, const JPEGImage& i2) {
                                  return prev + i2.Height();
                               });
-        int h = 0;
-        int colorSpace = -1;
-        for(int i = 0; i != jpgImgs.size(); ++i) {
-            int width = -1;
-            int height = -1;
-            int jpegSubsamp = -1;
-            if(tjDecompressHeader3(handles_[i],
-                                   jpgImgs[i].DataPtr(),
-                                   jpgImgs[i].JPEGSize(),
-                                   &width,
-                                   &height,
-                                   &jpegSubsamp,
-                                   &colorSpace))
-                throw std::runtime_error(tjGetErrorStr());
-            assert(width == globalWidth);
-            assert(height == jpgImgs[i].Height());
-        }
-
-
+        const int colorSpace = jpgImgs.front().PixelFormat();
         const size_t uncompressedSize =
             globalWidth * globalHeight * NumComponents(TJPF(colorSpace));
 
