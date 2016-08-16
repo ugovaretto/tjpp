@@ -29,7 +29,7 @@ class TJCompressor {
 public:
     TJCompressor() :
         tjCompressor_(tjInitCompress()) {}
-    const JPEGImage& Compress(const unsigned char* img,
+    JPEGImage Compress(const unsigned char* img,
                               int width,
                               int height,
                               TJPF pf,

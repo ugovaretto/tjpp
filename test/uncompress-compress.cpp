@@ -24,6 +24,7 @@
 #include "TJCompressor.h"
 #include "TJMemPoolCompressor.h"
 #include "TJDeCompressor.h"
+#include "TJParallelCompressor.h"
 
 #ifdef TIMING__
 #include "timing.h"
@@ -42,6 +43,65 @@ size_t FileSize(const string& fname) {
     //file.seekg( 0, std::ios_base::beg );
     return length;
 }
+
+
+void TestJPGMultiCompressor(const unsigned char* uimg,
+                            int width,
+                            int height,
+                            TJPF pf,
+                            TJSAMP ss,
+                            int quality,
+                            int numStacks) {
+
+
+    TJParallelCompressor< TJCompressor > mc(numStacks);
+#ifdef TIMING__
+    Time begin = Tick();
+#endif
+    std::vector< JPEGImage > images = mc.Compress(uimg, numStacks, 0, width,
+                                                  height, pf, ss, quality);
+#ifdef TIMING__
+    Time end = Tick();
+    cout << "multi - compression time: " << toms(end - begin).count() << endl;
+#endif
+    for(int i = 0; i != images.size(); ++i) {
+        const string fname = "mout" + to_string(i) + ".jpg";
+        ofstream os(fname, ios::binary);
+        assert(os);
+        assert(images[i].DataPtr());
+        os.write((char*)images[i].DataPtr(), images[i].JPEGSize());
+        //assert(images[i].Empty()); //moved!
+    }
+
+}
+
+//void TestJPGParallelDeCompressor(vector< shared_ptr< unsigned char > > in,
+//                                 int overlap) {
+//
+//
+//    TJParallelDeCompressor< TJDeCompressor > mc(in.size());
+//#ifdef TIMING__
+//    Time begin = Tick();
+//#endif
+//    Image img = mc.DeCompress(in, overlap);
+//#ifdef TIMING__
+//    Time end = Tick();
+//    cout << "multi - decompression time: " << toms(end - begin).count() << endl;
+//#endif
+//    TJCompressor c;
+//    JPEGImage jimg = c.Compress(img.DataPtr(),
+//                                img.Width(),
+//                                img.Height(),
+//                                in.front().PixelFormat(),
+//                                TJSAMP_420,
+//                                50);
+//    const string fname = "mout.jpg";
+//    ofstream os(fname, ios::binary);
+//    assert(os);
+//    os.write((char*)jimg.DataPtr(), img.JPEGSize());
+//
+//}
+
 void TestJPGMemPoolCompressor(const unsigned char* uimg,
                               int width,
                               int height,
@@ -123,8 +183,11 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
          << "ms" << endl;
 #endif
 
-    TestJPGMemPoolCompressor(img.DataPtr(), img.Width(), img.Height(),
-                             FromCS(img.PixelFormat()), TJSAMP_420, 50, 10);
+//    TestJPGMemPoolCompressor(img.DataPtr(), img.Width(), img.Height(),
+//                             FromCS(img.PixelFormat()), TJSAMP_420, 50, 10);
+
+    TestJPGMultiCompressor(img.DataPtr(), img.Width(), img.Height(),
+                           FromCS(img.PixelFormat()), TJSAMP_420, 50, 4);
 
     return EXIT_SUCCESS;
 }

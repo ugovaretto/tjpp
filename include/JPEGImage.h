@@ -28,6 +28,7 @@ struct HashTJPF {
         return std::hash< int >()(int(n));
     }
 };
+
 int NumComponents(TJPF tjpgPixelFormat) {
     static std::unordered_map< TJPF, int, HashTJPF > tjpfToInt = {
         {TJPF_RGB, 3},
@@ -58,7 +59,8 @@ void TJDeleter(unsigned char* ptr) {
 class JPEGImage {
 public:
     JPEGImage() : width_(0), height_(0), pixelFormat_(TJPF()),
-                  subSampling_(TJSAMP()), quality_(50), pitch_(0) {}
+                  subSampling_(TJSAMP()), quality_(50), pitch_(0),
+                  jpegSize_(0) {}
     JPEGImage(const JPEGImage&) = default;
     JPEGImage(JPEGImage&& i) {
         Move(i);
@@ -107,6 +109,7 @@ private:
         subSampling_ = i.subSampling_;
         quality_ = i.quality_;
         pitch_ = i.pitch_;
+        jpegSize_ = i.jpegSize_;
         data_ = std::move(i.data_);
         i.data_.reset();
         i.width_ = 0;
