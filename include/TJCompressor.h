@@ -30,14 +30,14 @@ public:
     TJCompressor() :
         tjCompressor_(tjInitCompress()) {}
     JPEGImage Compress(const unsigned char* img,
-                              int width,
-                              int height,
-                              TJPF pf,
-                              TJSAMP ss,
-                              int quality,
-                              int offset = 0,
-                              int flags = TJFLAG_FASTDCT,
-                              int pitch = 0) {
+                       int width,
+                       int height,
+                       TJPF pf,
+                       TJSAMP ss,
+                       int quality,
+                       int offset = 0,
+                       int flags = TJFLAG_FASTDCT,
+                       int pitch = 0) {
         if(img_.Empty()
             || UncompressedSize(width, height, pf) > UncompressedSize(img_)) {
             img_.Reset(width, height, pf, ss, quality);
@@ -61,10 +61,21 @@ public:
         img_.SetJPEGSize(jpegSize);
         return img_;
     }
-    //put data back when consumed if possible
-    //compressor.Put(std::move(jpegImage));
-    void Recycle(JPEGImage&& i) {
-        img_ = std::move(i);
+    //reuse image
+    JPEGImage Compress(JPEGImage&& recycled,
+                       const unsigned char* img,
+                       int width,
+                       int height,
+                       TJPF pf,
+                       TJSAMP ss,
+                       int quality,
+                       int offset = 0,
+                       int flags = TJFLAG_FASTDCT,
+                       int pitch = 0 ) {
+        img_ = std::move(recycled);
+        return Compress(img, width, height, pf, ss,
+                        quality, offset, flags, pitch);
+
     }
     ~TJCompressor() {
         tjDestroy(tjCompressor_);

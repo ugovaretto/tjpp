@@ -54,7 +54,8 @@ public:
             globalWidth * globalHeight * NumComponents(TJPF(colorSpace));
 
         if(img_.AllocatedSize() < uncompressedSize) {
-            img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(colorSpace)));
+            img_.SetParameters(globalWidth, globalHeight,
+                               FromTJ(TJPF(colorSpace)));
             img_.Allocate(uncompressedSize);
         }
         img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(colorSpace)));
@@ -74,24 +75,26 @@ public:
                 NumComponents(TJPF(colorSpace)) * i
                     * globalWidth * jpgImgs[i].Height();
             tasks_[i] = std::move(std::async(std::launch::async,
-                                        decompress,
-                                        handles_[i],
-                                        jpgImgs[i].DataPtr(),
-                                        jpgImgs[i].JPEGSize(),
-                                        img_.DataPtr() + offset,
-                                        int(globalWidth),
-                                        int(jpgImgs[i].Height()),
-                                        TJPF(colorSpace),
-                                        flags));
+                                             decompress,
+                                             handles_[i],
+                                             jpgImgs[i].DataPtr(),
+                                             jpgImgs[i].JPEGSize(),
+                                             img_.DataPtr() + offset,
+                                             int(globalWidth),
+                                             int(jpgImgs[i].Height()),
+                                             TJPF(colorSpace),
+                                             flags));
 
         }
         for(auto& f: tasks_) f.get();
         return std::move(img_);
     }
-    //if possible put used data back by calling
-    //decompressor.Recycle(std::move(usedImage));
-    void Recycle(Image&& img) {
-        img_ = std::move(img);
+    //reuse data
+    Image DeCompress(Image&& recycled,
+                     const std::vector< JPEGImage >& jpgImgs,
+                     int flags = TJFLAG_FASTDCT) {
+        img_ = std::move(recycled);
+        return DeCompress(jpgImgs, flags);
     }
     ~TJParallelDeCompressor() {
         for(auto& h: handles_) tjDestroy(h);

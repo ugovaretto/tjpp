@@ -70,10 +70,14 @@ public:
 #endif
         return std::move(img_);
     }
-    //if possible put used data back by calling
-    //decompressor.Recycle(std::move(usedImage));
-    void Recycle(Image&& img) {
-        img_ = std::move(img);
+    //reuse image
+    Image DeCompress(Image&& recycled,
+                     const unsigned char* jpgImg,
+                     size_t size,
+                     int flags = TJFLAG_FASTDCT,
+                     int pitch = 0) {
+        img_ = std::move(recycled);
+        return DeCompress(jpgImg, size, flags, pitch);
     }
     ~TJDeCompressor() {
         tjDestroy(tjDeCompressor_);

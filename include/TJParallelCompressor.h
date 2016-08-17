@@ -30,7 +30,11 @@ namespace tjpp {
 template < typename C >
 class TJParallelCompressor {
 public:
-    TJParallelCompressor(int numCompressors) : compressors_(numCompressors) {}
+    TJParallelCompressor(int numCompressors)
+        : compressors_(numCompressors), images_(numCompressors) {}
+    //UV note: current implementation spawns threads at each call, however after
+    //testing with other solutions like creating threads and wait on a condition
+    //variable in a loop, there does not seem to be any real gain in doing so.
     std::vector< JPEGImage > Compress(const unsigned char* img,
                                       int stacks,
                                       int width,
@@ -41,18 +45,35 @@ public:
                                       int offset = 0,
                                       int flags = TJFLAG_FASTDCT,
                                       int pitch = 0) {
-
-        assert(size_t(stacks) <= compressors_.size());
-        auto compress = [&](C* compressor, int h, int off) {
-            return compressor->Compress(img, width, h, pf, ss,
-                                        quality, off, flags, pitch);
+        //won't move/reallocate if size > stacks anyway
+        if(pitch != 0)
+            throw std::logic_error("Only 0 pitch supported for now");
+        compressors_.resize(stacks);
+        images_.resize(stacks);
+        auto compress = [](C* compressor,
+                           const unsigned char* img,
+                           int width,
+                           int height,
+                           TJPF pf,
+                           TJSAMP ss,
+                           int quality,
+                           int offset,
+                           int flags,
+                           int pitch,
+                           JPEGImage* out ) {
+            *out = compressor->Compress(img, width, height, pf, ss,
+                                        quality, offset, flags, pitch);
         };
-        std::vector< std::future< JPEGImage > > tasks_;
+        std::vector< std::future< void > > tasks_;
         const int h = height / stacks;
         const int nc = NumComponents(pf);
         for(int s = 0; s != stacks - 1; ++s) {
-            tasks_.push_back( std::async(std::launch::async, compress,
-                           &compressors_[s], h, s * h * width * nc));
+            const int off = s * h * width * nc;
+            tasks_.push_back(std::async(std::launch::async, compress,
+                                        &compressors_[s], img,
+                                        width, h, pf, ss, quality, off, flags,
+                                        pitch, &images_[s]));
+
 
         }
         const size_t last = compressors_.size() - 1;
@@ -60,25 +81,33 @@ public:
         const int lastHeight = height - (stacks - 1) * h;
         tasks_.push_back(
             std::async(std::launch::async, compress,
-                       &compressors_[last],
+                       &compressors_[last], img,
+                       width,
                        lastHeight,
-                       lastOffset));
-        std::vector< JPEGImage > images;
-        for(auto& f: tasks_) {
-            images.push_back(f.get());
-        }
-        return images;
-
+                       pf, ss, quality, lastOffset, flags, pitch,
+                       &(images_.back())));
+        for(auto& f: tasks_) f.get();
+        return images_;
     }
-//    //put data back when consumed if possible
-//    //compressor.Put(std::move(jpegImage));
-//    void Recycle(JPEGImage&& i) {
-//        img_ = std::move(i);
-//    }
-//    ~TJParallelCompressor() {
-//        tjDestroy(tjCompressor_);
-//    }
+    //reuse data
+    std::vector< JPEGImage > Compress(std::vector< JPEGImage >&& recycled,
+                                      const unsigned char* img,
+                                      int stacks,
+                                      int width,
+                                      int height,
+                                      TJPF pf,
+                                      TJSAMP ss,
+                                      int quality,
+                                      int offset = 0,
+                                      int flags = TJFLAG_FASTDCT,
+                                      int pitch = 0) {
+        images_ = std::move(recycled);
+        return Compress(img, stacks, width, height, pf, ss,
+                        quality, offset, flags, pitch);
+    }
+
 private:
     std::vector< C > compressors_;
+    std::vector< JPEGImage > images_;
 };
 }
