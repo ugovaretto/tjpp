@@ -39,7 +39,7 @@ public:
                        int flags = TJFLAG_FASTDCT,
                        int pitch = 0) {
         if(img_.Empty()
-            || UncompressedSize(width, height, pf) > UncompressedSize(img_)) {
+            || tjBufSize(width, height, ss) > img_.BufferSize()) {
             img_.Reset(width, height, pf, ss, quality);
         }
         img_.SetParams(width, height, pf, ss, quality);
@@ -58,7 +58,7 @@ public:
                   << toms(end - begin).count()
                   << " ms\n";
 #endif
-        img_.SetJPEGSize(jpegSize);
+        img_.SetCompressedSize(jpegSize);
         return img_;
     }
     //reuse image

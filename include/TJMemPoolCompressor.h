@@ -74,7 +74,7 @@ public:
             JPEGImage(width, height, pf, ss, quality)));
 
         if(i.Empty()
-            || UncompressedSize(width, height, pf) > UncompressedSize(i)) {
+            || tjBufSize(width, height, ss) > i.BufferSize()) {
             i.Reset(width, height, pf, ss, quality);
         }
         i.SetParams(width, height, pf, ss, quality);
@@ -93,7 +93,7 @@ public:
                   << toms(end - begin).count()
                   << std::endl;
 #endif
-        i.SetJPEGSize(jpegSize);
+        i.SetCompressedSize(jpegSize);
         return JPEGImageWrapper(i, memoryPool_);
     }
     void PutBack(JPEGImage&& im) {

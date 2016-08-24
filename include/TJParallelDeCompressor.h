@@ -78,7 +78,7 @@ public:
                                              decompress,
                                              handles_[i],
                                              jpgImgs[i].DataPtr(),
-                                             jpgImgs[i].JPEGSize(),
+                                             jpgImgs[i].CompressedSize(),
                                              img_.DataPtr() + offset,
                                              int(globalWidth),
                                              int(jpgImgs[i].Height()),

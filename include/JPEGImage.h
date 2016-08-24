@@ -60,7 +60,7 @@ class JPEGImage {
 public:
     JPEGImage() : width_(0), height_(0), pixelFormat_(TJPF()),
                   subSampling_(TJSAMP()), quality_(50), pitch_(0),
-                  jpegSize_(0) {}
+                  compressedSize_(0), bufferSize_(0) {}
     JPEGImage(const JPEGImage&) = default;
     JPEGImage(JPEGImage&& i) {
         Move(i);
@@ -95,6 +95,8 @@ public:
                                        w * h * NumComponents(pf)));
         data_.reset(tjAlloc(sz),
                     TJDeleter);
+        compressedSize_ = sz;
+        bufferSize_ = sz;
     }
     void SetParams(size_t w, size_t h, TJPF pf, TJSAMP ss, int q) {
         width_ = w;
@@ -103,8 +105,11 @@ public:
         subSampling_ = ss;
         quality_ = q;
     }
-    void SetJPEGSize(size_t s) { jpegSize_ = s; }
-    size_t JPEGSize() const { return jpegSize_; }
+    void SetCompressedSize(size_t s) { compressedSize_ = s; }
+    size_t CompressedSize() const { return compressedSize_; }
+    // Size of buffer allocated by tjBuf
+    void SetBufferSize(size_t s) { bufferSize_ = s; }
+    size_t BufferSize() const { return bufferSize_; }
     bool operator!() const { return Empty(); }
 private:
     void Move(JPEGImage& i) {
@@ -114,7 +119,8 @@ private:
         subSampling_ = i.subSampling_;
         quality_ = i.quality_;
         pitch_ = i.pitch_;
-        jpegSize_ = i.jpegSize_;
+        compressedSize_ = i.compressedSize_;
+        bufferSize_ = i.bufferSize_;
         data_ = std::move(i.data_);
         i.data_.reset();
         i.width_ = 0;
@@ -127,7 +133,8 @@ private:
     TJSAMP subSampling_;
     int quality_;
     int pitch_;
-    size_t jpegSize_;
+    size_t compressedSize_;
+    size_t bufferSize_;
     std::shared_ptr< unsigned char > data_;
 };
 
