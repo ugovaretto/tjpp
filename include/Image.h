@@ -38,7 +38,7 @@ struct HashCS {
     }
 };
 
-int NComp(ColorSpace pixelFormat) {
+inline int NComp(ColorSpace pixelFormat) {
     static std::unordered_map< ColorSpace, int, HashCS > pfToInt = {
         {RGB, 3},
         {BGR, 3},

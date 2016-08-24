@@ -29,7 +29,7 @@ struct HashTJPF {
     }
 };
 
-int NumComponents(TJPF tjpgPixelFormat) {
+inline int NumComponents(TJPF tjpgPixelFormat) {
     static std::unordered_map< TJPF, int, HashTJPF > tjpfToInt = {
         {TJPF_RGB, 3},
         {TJPF_BGR, 3},
@@ -50,7 +50,7 @@ int NumComponents(TJPF tjpgPixelFormat) {
     return tjpfToInt[tjpgPixelFormat];
 }
 
-void TJDeleter(unsigned char* ptr) {
+inline void TJDeleter(unsigned char* ptr) {
     if(!ptr)
         return;
     tjFree(ptr);
@@ -77,6 +77,7 @@ public:
     int Height() const { return height_; }
     TJPF PixelFormat() const { return pixelFormat_; }
     TJSAMP ChrominanceSubSampling() const { return subSampling_; }
+    int Quality() const { return quality_; }
     std::shared_ptr< unsigned char > Data() const { return data_; }
     unsigned char* DataPtr() {
         return data_.get();
@@ -130,11 +131,11 @@ private:
     std::shared_ptr< unsigned char > data_;
 };
 
-size_t UncompressedSize(size_t width, size_t height, TJPF pf) {
+inline size_t UncompressedSize(size_t width, size_t height, TJPF pf) {
     return width * height * NumComponents(pf);
 }
 
-size_t UncompressedSize(const JPEGImage& i) {
+inline size_t UncompressedSize(const JPEGImage& i) {
     return size_t(i.Width() * i.Height() * NumComponents(i.PixelFormat()));
 }
 }

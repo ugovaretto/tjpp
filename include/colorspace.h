@@ -19,7 +19,7 @@
 #include "JPEGImage.h"
 
 namespace tjpp {
-ColorSpace FromTJ(TJPF pf) {
+inline ColorSpace FromTJ(TJPF pf) {
     static std::unordered_map< TJPF, ColorSpace, HashTJPF > tjpfToCS = {
         {TJPF_RGB, RGB},
         {TJPF_BGR, BGR},
@@ -40,7 +40,7 @@ ColorSpace FromTJ(TJPF pf) {
     return tjpfToCS[pf];
 }
 
-TJPF FromCS(ColorSpace pf) {
+inline TJPF FromCS(ColorSpace pf) {
     static std::unordered_map< ColorSpace, TJPF, HashCS > tjpfToCS = {
         {RGB, TJPF_RGB},
         {BGR, TJPF_BGR},
