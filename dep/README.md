@@ -7,8 +7,11 @@ https://github.com/ugovaretto/syncqueue
 
 Downloaded automatically when launching:
 
+```sh
 git submodule init
+
 git submodule update
+```
 
 OR
 
