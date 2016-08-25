@@ -20,7 +20,6 @@
 
 #include "Image.h"
 #include "JPEGImage.h"
-#include "colorspace.h"
 #include "timing.h"
 #include <numeric>
 
@@ -55,10 +54,10 @@ public:
 
         if(img_.AllocatedSize() < uncompressedSize) {
             img_.SetParameters(globalWidth, globalHeight,
-                               FromTJ(TJPF(pixelFormat)));
+                               TJPF(pixelFormat));
             img_.Allocate(uncompressedSize);
         }
-        img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(pixelFormat)));
+        img_.SetParameters(globalWidth, globalHeight, TJPF(pixelFormat));
 
         auto decompress = [](tjhandle handle,
                              const unsigned char* jpgImg,

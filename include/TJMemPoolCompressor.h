@@ -70,8 +70,8 @@ public:
                               int flags = TJFLAG_FASTDCT,
                               int pitch = 0) {
 
-        JPEGImage i(memoryPool_->Pop(
-            JPEGImage(width, height, pf, ss, quality)));
+        JPEGImage i;/*(memoryPool_->Pop(
+            JPEGImage(width, height, pf, ss, quality)));*/
 
         if(i.Empty()
             || tjBufSize(width, height, ss) > i.BufferSize()) {

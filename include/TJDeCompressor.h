@@ -33,8 +33,8 @@ public:
     //read data from header case
     Image DeCompress(unsigned char* jpgImg,
                      size_t size,
+                     int pf,
                      int flags = TJFLAG_FASTDCT,
-                     int pf = -1,
                      int pitch = 0) {
         int width = -1;
         int height = -1;
@@ -71,8 +71,8 @@ public:
     Image DeCompress(Image&& recycled,
                      unsigned char* jpgImg,
                      size_t size,
+                     int pf,
                      int flags = TJFLAG_FASTDCT,
-                     int pf = -1,
                      int pitch = 0) {
         img_ = std::move(recycled);
         return DeCompress(jpgImg, size, flags, pf, pitch);

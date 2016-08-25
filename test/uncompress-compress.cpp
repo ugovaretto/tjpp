@@ -71,7 +71,7 @@ TestJPGParallelCompressor(const unsigned char* uimg,
         ofstream os(fname, ios::binary);
         assert(os);
         assert(images[i].DataPtr());
-        os.write((char*)images[i].DataPtr(), images[i].JPEGSize());
+        os.write((char*)images[i].DataPtr(), images[i].CompressedSize());
         //assert(images[i].Empty()); //moved!
     }
     return images;
@@ -108,7 +108,7 @@ void TestJPGParallelDeCompressor(const vector< JPEGImage >& imgs) {
     const string fname = "mout.jpg";
     ofstream os(fname, ios::binary);
     assert(os);
-    os.write((char*)jimg.DataPtr(), jimg.JPEGSize());
+    os.write((char*)jimg.DataPtr(), jimg.CompressedSize());
 
 }
 
@@ -133,7 +133,7 @@ void TestJPGMemPoolCompressor(const unsigned char* uimg,
         ofstream os(fname, ios::binary);
         assert(os);
         assert(img.DataPtr());
-        os.write((char*)img.DataPtr(), img.JPEGSize());
+        os.write((char*)img.DataPtr(), img.CompressedSize());
         //tjc.PutBack(img);
         assert(img.Empty()); //moved!
     }
@@ -145,6 +145,7 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
     if(argc < 4 ){
         cerr << "usage: " << argv[0]
              << " <jpeg file> <quality=[0,100]> <num threads>" << endl;
+        return EXIT_FAILURE;
     }
     const size_t length = FileSize(argv[1]);
     using Byte = unsigned char;
@@ -159,7 +160,7 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
 #endif
     //move semantics for both constructor and assignment operator
     Image img;
-    img = decomp.DeCompress(input.data(), input.size());
+    img = decomp.DeCompress(input.data(), input.size(), TJPF_BGR);
 #ifdef TIMING__
     Time end = Tick();
 #endif
@@ -171,14 +172,14 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
 #endif
     JPEGImage jpegImage =
         comp.Compress(img.DataPtr(), img.Width(), img.Height(),
-                      FromCS(img.PixelFormat()), TJSAMP_420, quality);
+                      img.PixelFormat(), TJSAMP_420, quality);
 #ifdef TIMING__
     Time end2 = Tick();
 #endif
     //write
     ofstream os("out.jpg", ios::binary);
     assert(os);
-    os.write((const char*) jpegImage.DataPtr(), jpegImage.JPEGSize());
+    os.write((const char*) jpegImage.DataPtr(), jpegImage.CompressedSize());
     os.flush();
 
 #ifdef TIMING__
@@ -200,7 +201,7 @@ int TestCompressorAndDecompressor(int argc, char** argv) {
     assert(numThreads > 0);
     std::vector< JPEGImage > stacks =
         TestJPGParallelCompressor(img.DataPtr(), img.Width(), img.Height(),
-                                  FromCS(img.PixelFormat()), TJSAMP_420,
+                                  img.PixelFormat(), TJSAMP_420,
                                   quality,
                                   numThreads);
     TestJPGParallelDeCompressor(stacks);
