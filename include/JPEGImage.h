@@ -17,38 +17,13 @@
 
 //Note: consider using X* or *X pixel format to speed up memory access
 #include <memory>
-#include <unordered_map>
 #include <stdexcept>
 
 #include <turbojpeg.h>
 
-namespace tjpp {
-struct HashTJPF {
-    size_t operator()(TJPF n) const {
-        return std::hash< int >()(int(n));
-    }
-};
+#include "pixelformat.h"
 
-inline int NumComponents(TJPF tjpgPixelFormat) {
-    static std::unordered_map< TJPF, int, HashTJPF > tjpfToInt = {
-        {TJPF_RGB, 3},
-        {TJPF_BGR, 3},
-        {TJPF_RGBX, 4},
-        {TJPF_BGRX, 4},
-        {TJPF_XRGB, 4},
-        {TJPF_GRAY, 1},
-        {TJPF_RGBA, 4},
-        {TJPF_BGRA, 4},
-        {TJPF_ABGR, 4},
-        {TJPF_ARGB, 4},
-        {TJPF_CMYK, 4}
-    };
-    if(tjpfToInt.find(tjpgPixelFormat) == tjpfToInt.end()) {
-        throw std::domain_error("Invalid pixel format "
-                                    + std::to_string(tjpgPixelFormat));
-    }
-    return tjpfToInt[tjpgPixelFormat];
-}
+namespace tjpp {
 
 inline void TJDeleter(unsigned char* ptr) {
     if(!ptr)

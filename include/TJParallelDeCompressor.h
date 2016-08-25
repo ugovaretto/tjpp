@@ -49,16 +49,16 @@ public:
                               [](size_t prev, const JPEGImage& i2) {
                                  return prev + i2.Height();
                               });
-        const int colorSpace = jpgImgs.front().PixelFormat();
+        const int pixelFormat = jpgImgs.front().PixelFormat();
         const size_t uncompressedSize =
-            globalWidth * globalHeight * NumComponents(TJPF(colorSpace));
+            globalWidth * globalHeight * NumComponents(TJPF(pixelFormat));
 
         if(img_.AllocatedSize() < uncompressedSize) {
             img_.SetParameters(globalWidth, globalHeight,
-                               FromTJ(TJPF(colorSpace)));
+                               FromTJ(TJPF(pixelFormat)));
             img_.Allocate(uncompressedSize);
         }
-        img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(colorSpace)));
+        img_.SetParameters(globalWidth, globalHeight, FromTJ(TJPF(pixelFormat)));
 
         auto decompress = [](tjhandle handle,
                              const unsigned char* jpgImg,
@@ -72,7 +72,7 @@ public:
 
         for(int i = 0; i != jpgImgs.size(); ++i) {
             const int offset =
-                NumComponents(TJPF(colorSpace)) * i
+                NumComponents(TJPF(pixelFormat)) * i
                     * globalWidth * jpgImgs[i].Height();
             tasks_[i] = std::move(std::async(std::launch::async,
                                              decompress,
@@ -82,7 +82,7 @@ public:
                                              img_.DataPtr() + offset,
                                              int(globalWidth),
                                              int(jpgImgs[i].Height()),
-                                             TJPF(colorSpace),
+                                             TJPF(pixelFormat),
                                              flags));
 
         }

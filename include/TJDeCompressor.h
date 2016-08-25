@@ -19,7 +19,6 @@
 #include <turbojpeg.h>
 
 #include "Image.h"
-#include "colorspace.h"
 #include "timing.h"
 
 namespace tjpp {
@@ -32,35 +31,33 @@ public:
         }
     }
     //read data from header case
-    Image DeCompress(const unsigned char* jpgImg,
+    Image DeCompress(unsigned char* jpgImg,
                      size_t size,
                      int flags = TJFLAG_FASTDCT,
+                     int pf = -1,
                      int pitch = 0) {
         int width = -1;
         int height = -1;
         int jpegSubsamp = -1;
-        int colorSpace = -1;
-        if(tjDecompressHeader3(tjDeCompressor_,
+        if(tjDecompressHeader2(tjDeCompressor_,
                                jpgImg,
                                size,
                                &width,
                                &height,
-                               &jpegSubsamp,
-                               &colorSpace))
+                               &jpegSubsamp))
             throw std::runtime_error(tjGetErrorStr());
         const size_t uncompressedSize =
-            width * height * NumComponents(TJPF(colorSpace));
+            width * height * NumComponents(TJPF(pf));
 
-        if(img_.AllocatedSize() < uncompressedSize) {
-            img_.SetParameters(width, height, FromTJ(TJPF(colorSpace)));
+        img_.SetParameters(width, height, TJPF(pf));
+        if(img_.AllocatedSize() < uncompressedSize) 
             img_.Allocate(uncompressedSize);
-        }
-        img_.SetParameters(width, height, FromTJ(TJPF(colorSpace)));
+        
 #ifdef TIMING__
         Time begin = Tick();
 #endif
         if(tjDecompress2(tjDeCompressor_, jpgImg, size, img_.DataPtr(),
-                         width, pitch, height, colorSpace, flags))
+                         width, pitch, height, pf, flags))
             throw std::runtime_error(tjGetErrorStr());
 #ifdef TIMING__
         Time end = Tick();
@@ -72,12 +69,13 @@ public:
     }
     //reuse image
     Image DeCompress(Image&& recycled,
-                     const unsigned char* jpgImg,
+                     unsigned char* jpgImg,
                      size_t size,
                      int flags = TJFLAG_FASTDCT,
+                     int pf = -1,
                      int pitch = 0) {
         img_ = std::move(recycled);
-        return DeCompress(jpgImg, size, flags, pitch);
+        return DeCompress(jpgImg, size, flags, pf, pitch);
     }
     ~TJDeCompressor() {
         tjDestroy(tjDeCompressor_);

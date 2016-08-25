@@ -15,62 +15,21 @@
 //You should have received a copy of the GNU General Public License
 //along with tjpp.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
-#include <unordered_map>
+#include "pixelformat.h"
 
 namespace tjpp {
-enum ColorSpace {
-    RGB = 0,
-    RGBA,
-    GRAY,
-    BGR,
-    BGRA,
-    ABGR,
-    ARGB,
-    CMYK,
-    RGBX,
-    BGRX,
-    XRGB,
-};
-
-struct HashCS {
-    size_t operator()(ColorSpace n) const {
-        return std::hash< int >()(int(n));
-    }
-};
-
-inline int NComp(ColorSpace pixelFormat) {
-    static std::unordered_map< ColorSpace, int, HashCS > pfToInt = {
-        {RGB, 3},
-        {BGR, 3},
-        {GRAY, 1},
-        {RGBA, 4},
-        {BGRA, 4},
-        {ABGR, 4},
-        {ARGB, 4},
-        {CMYK, 4},
-        {RGBX, 4},
-        {BGRX, 4},
-        {XRGB, 4}
-    };
-    if(pfToInt.find(pixelFormat) == pfToInt.end()) {
-        throw std::domain_error("Invalid pixel format "
-                                    + std::to_string(pixelFormat));
-    }
-    return pfToInt[pixelFormat];
-}
-
 class Image {
 public:
-    Image() : width_(0), height_(0), colorSpace_(PixelFormat()) {}
+    Image() : width_(0), height_(0), pixelFormat_(PixelFormat()) {}
     Image(const std::vector< unsigned char >& data,
-          size_t width, size_t height, ColorSpace cs) :
-        data_(data), width_(width), height_(height), colorSpace_(cs) {}
+          size_t width, size_t height, TJPF pf) :
+        data_(data), width_(width), height_(height), pixelFormat_(pf) {}
     Image(const Image&) = default;
     Image& operator=(const Image&) = default;
     Image(Image&& i) {
         width_ = i.width_;
         height_ = i.height_;
-        colorSpace_ = i.colorSpace_;
+        pixelFormat_ = i.pixelFormat_;
         data_ = std::move(i.data_);
         i.width_ = 0;
         i.height_ = 0;
@@ -78,7 +37,7 @@ public:
     Image& operator=(Image&& i) {
         width_ = i.width_;
         height_ = i.height_;
-        colorSpace_ = i.colorSpace_;
+        pixelFormat_ = i.pixelFormat_;
         data_ = std::move(i.data_);
         i.width_ = 0;
         i.height_ = 0;
@@ -86,27 +45,25 @@ public:
     }
     size_t Width() const { return width_; }
     size_t Height() const { return height_; }
-    ColorSpace PixelFormat() const { return colorSpace_; }
+    TJPF PixelFormat() const { return pixelFormat_; }
     std::vector< unsigned char > Data() const { return data_; }
     const unsigned char* DataPtr() const { return data_.data(); }
     unsigned char* DataPtr() { return data_.data(); }
-    int NumComponents() const {
-        return NComp(colorSpace_);
-    }
-    size_t Size() const { return width_ * height_ * NumComponents(); }
+    int NumPlanes() const { return NumComponents(pixelFormat_); }
+    size_t Size() const { return width_ * height_ * NumPlanes(); }
     size_t AllocatedSize() const { return data_.size(); }
     void Allocate(size_t sz) {
         data_.resize(sz);
     }
-    void SetParameters(size_t w, size_t h, ColorSpace cs) {
+    void SetParameters(size_t w, size_t h, TJPF pf) {
         width_ = w;
         height_ = h;
-        colorSpace_ = cs;
+        pixelFormat_ = pf;
     }
 private:
     size_t width_;
     size_t height_;
-    ColorSpace colorSpace_;
+    TJPF pixelFormat_;
     std::vector< unsigned char > data_;
 };
 }

@@ -15,10 +15,59 @@
 //You should have received a copy of the GNU General Public License
 //along with tjpp.  If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_map>
-#include "Image.h"
+
 #include "JPEGImage.h"
+#include "Image.h"
 
 namespace tjpp {
+
+//
+// Note: DO NOT USE THIS STUFF: turbo jpeg colorspace does not look like this
+// To use colorspaces this should be modified as per API docs for TJ colorspaces
+//
+
+enum ColorSpace {
+    RGB = 0,
+    RGBA,
+    GRAY,
+    BGR,
+    BGRA,
+    ABGR,
+    ARGB,
+    CMYK,
+    RGBX,
+    BGRX,
+    XRGB,
+};
+
+struct HashCS {
+    size_t operator()(ColorSpace n) const {
+        return std::hash< int >()(int(n));
+    }
+};
+
+inline int NComp(Colorspace pixelFormat) {
+    static std::unordered_map< Colorspace, int, HashCS > pfToInt = {
+        {RGB, 3},
+        {BGR, 3},
+        {GRAY, 1},
+        {RGBA, 4},
+        {BGRA, 4},
+        {ABGR, 4},
+        {ARGB, 4},
+        {CMYK, 4},
+        {RGBX, 4},
+        {BGRX, 4},
+        {XRGB, 4}
+    };
+    if(pfToInt.find(pixelFormat) == pfToInt.end()) {
+        throw std::domain_error("Invalid pixel format "
+                                    + std::to_string(pixelFormat));
+    }
+    return pfToInt[pixelFormat];
+}
+
+
 inline ColorSpace FromTJ(TJPF pf) {
     static std::unordered_map< TJPF, ColorSpace, HashTJPF > tjpfToCS = {
         {TJPF_RGB, RGB},
