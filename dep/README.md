@@ -17,7 +17,7 @@ OR
 
 when cloning with:
 
-git clone --recursive https://github.com/ugovaretto/tjpp.git
+`git clone --recursive https://github.com/ugovaretto/tjpp.git`
 
 libjpeg-turbo
 -------------
